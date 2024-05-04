@@ -7,7 +7,12 @@
 # # And must be named steam (in lowercase)  # #
 # # # # # # # # # # # # # # # # # # # # # # # #
 
-APPHOME="$XDG_DATA_HOME/Steam/HOME"
+DATADIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+STATEDIR="${XDG_STATE_HOME:-$HOME/.local/state}"
+CONFIGDIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+
+APPHOME="$DATADIR/Steam/HOME"
 APPEXEC="/usr/bin/steam" # Replace this to the right path to steam if it is not in /usr/bin/steam
 APPDESKTOP="/usr/share/applications/steam.desktop" # Might be in a different location in some distros.
 STEAMPRELOAD="$HOME/.local/lib/steam"
@@ -19,32 +24,29 @@ if ! command -v gcc >/dev/null 2>&1; then echo "You need to install gcc for this
 [ ! -e /usr/include/gnu/stubs-32.h ] && echo "Could not find /usr/include/gnu/stubs-32.h which is needed for this script to work" && exit 1
 [ ! -e "$HOME/.local/bin/steam" ] && echo "RTFM!" && exit 1
 
-if [ -z "$XDG_CACHE_HOME" ] || [ -z "$XDG_CONFIG_HOME" ] || [ -z "$XDG_DATA_HOME" ] || [ -z "$XDG_STATE_HOME" ]; then
-	echo "One or more XDG Base dir variables not defined, bailing out"; exit 1
-fi
-
-if [ -z "$APPHOME" ] || [ -z "$APPEXEC" ] || [ -z "$APPDESKTOP" ] || [ -z "$STEAMPRELOAD" ]; then
+if [ -z "$APPHOME" ] || [ -z "$APPEXEC" ] || [ -z "$APPDESKTOP" ] || [ -z "$STEAMPRELOAD" ] \
+|| [ -z "$DATADIR" ] || [ -z "$STATEDIR" ] || [ -z "$CONFIGDIR" ] || [ -z "$CACHEDIR" ]; then
 	echo "You broke the script badly, like what were you thinking?"; exit 1
 fi
 
 # PATCH STEAM DESKTOP FILE
-if ! ls "$XDG_DATA_HOME"/applications/*steam.desktop >/dev/null 2>&1; then
-	cp "$APPDESKTOP" "$XDG_DATA_HOME"/applications/steam.desktop || { echo "Couldn't copy $APPDESKTOP" & exit 1; }
+if ! ls "$DATADIR"/applications/*steam.desktop >/dev/null 2>&1; then
+	cp "$APPDESKTOP" "$DATADIR"/applications/steam.desktop || { echo "Couldn't copy $APPDESKTOP" & exit 1; }
 fi
 
-if ! grep "Exec=steam-runtime %U" "$XDG_DATA_HOME"/applications/*steam.desktop >/dev/null 2>&1; then
-	sed -i "s#Exec=[^ ]*#Exec=steam-runtime#g" "$XDG_DATA_HOME"/applications/*steam.desktop && echo "patched steam.desktop"
+if ! grep "Exec=steam-runtime %U" "$DATADIR"/applications/*steam.desktop >/dev/null 2>&1; then
+	sed -i "s#Exec=[^ ]*#Exec=steam-runtime#g" "$DATADIR"/applications/*steam.desktop && echo "patched steam.desktop"
 fi
 
 # MAKE APPHOME AND LINKS
-mkdir -p "$APPHOME/.local" "$XDG_DATA_HOME/pki" "$XDG_DATA_HOME/icons" 2>/dev/null
+mkdir -p "$APPHOME/.local" "$DATADIR/pki" "$DATADIR/icons" 2>/dev/null
 [ ! -e "$HOME/.local/bin/steam-runtime" ] && ln -s "$HOME/.local/bin/steam" "$HOME/.local/bin/steam-runtime"
-[ ! -e "$APPHOME/.local/share" ] && ln -s "$XDG_DATA_HOME" "$APPHOME/.local/share"
-[ ! -e "$APPHOME/.local/state" ] && ln -s "$XDG_STATE_HOME" "$APPHOME/.local/state"
-[ ! -e "$APPHOME/.config" ] && ln -s "$XDG_CONFIG_HOME" "$APPHOME/.config"
-[ ! -e "$APPHOME/.cache" ] && ln -s "$XDG_CACHE_HOME" "$APPHOME/.cache"
-[ ! -e "$APPHOME/.icons" ] && ln -s "$XDG_DATA_HOME/icons" "$APPHOME/.icons" # Some apps have hardcoded ~/.icons path
-[ ! -e "$APPHOME/.pki" ] && ln -s "$XDG_DATA_HOME/pki" "$APPHOME/.pki" # Chromium/electron hardcode ~/.pki
+[ ! -e "$APPHOME/.local/share" ] && ln -s "$DATADIR" "$APPHOME/.local/share"
+[ ! -e "$APPHOME/.local/state" ] && ln -s "$STATEDIR" "$APPHOME/.local/state"
+[ ! -e "$APPHOME/.config" ] && ln -s "$CONFIGDIR" "$APPHOME/.config"
+[ ! -e "$APPHOME/.cache" ] && ln -s "$CACHEDIR" "$APPHOME/.cache"
+[ ! -e "$APPHOME/.icons" ] && ln -s "$DATADIR/icons" "$APPHOME/.icons" # Some apps have hardcoded ~/.icons path
+[ ! -e "$APPHOME/.pki" ] && ln -s "$DATADIR/pki" "$APPHOME/.pki" # Chromium/electron hardcode ~/.pki
 
 find "$APPHOME" -xtype l -delete # Clears broken links
 for FILES in "$HOME"/*; do # Symlinks other files in $HOME to $APPHOME
@@ -58,7 +60,7 @@ done
 [ ! -e "$APPHOME/Desktop" ] && ln -s "$HOME" "$APPHOME/Desktop" # Makes steam install .desktop of games in $HOME if there is not a ~/Desktop dir
 
 # MAKE LIBRARY THAT FIXES SCREENSAVER ISSUE
-if ! [ -d "$STEAMPRELOAD" ]; then
+if [ -z "$(ls "$STEAMPRELOAD" 2>/dev/null)" ]; then
 	mkdir -p "$STEAMPRELOAD" && cd "$STEAMPRELOAD" || exit 1
  	cat <<- EOF > sdl_block_screensaver_inhibit.c
 	/* sdl_block_screensaver_inhibit.c */
