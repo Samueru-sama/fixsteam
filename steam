@@ -49,14 +49,7 @@ mkdir -p "$APPHOME/.local" "$DATADIR/pki" "$DATADIR/icons" 2>/dev/null
 [ ! -e "$APPHOME/.pki" ] && ln -s "$DATADIR/pki" "$APPHOME/.pki" # Chromium/electron hardcode ~/.pki
 
 find "$APPHOME" -xtype l -delete # Clears broken links
-for FILES in "$HOME"/*; do # Symlinks other files in $HOME to $APPHOME
-    FILENAME=$(basename "$FILES")
-    DEST="$APPHOME/$FILENAME"
-    if [ ! -e "$DEST" ]; then
-        ln -s "$FILES" "$DEST"
-    fi
-done
-
+find "$HOME" -maxdepth 1 -not -path "$HOME" -exec ln -sn {} "$APPHOME" \; >/dev/null 2>&1 # Symlinks other files in $HOME to $APPHOME
 [ ! -e "$APPHOME/Desktop" ] && ln -s "$HOME" "$APPHOME/Desktop" # Makes steam install .desktop of games in $HOME if there is not a ~/Desktop dir
 
 # MAKE LIBRARY THAT FIXES SCREENSAVER ISSUE
