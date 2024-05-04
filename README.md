@@ -20,8 +20,6 @@ If you don't have `$HOME/.local/bin` in your PATH and/or it is not FIRST in PATH
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-You also need to have `$XDG_CACHE_HOME`, `$XDG_CONFIG_HOME`, `$XDG_DATA_HOME` and `$XDG_STATE_HOME` defined for the script to work, the script will tell you if they are empty. 
-
 ----------------------------------------------------
 
 Credit and big thanks goes to https://github.com/RunningDroid for the screensaver fix: 
