@@ -8,7 +8,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # #
 
 APPHOME="$XDG_DATA_HOME/Steam/HOME"
-APPEXEC="$HOME/.local/opt/steam/steam" # Replace this to the right path to steam if it is not in /usr/bin/steam
+APPEXEC="/usr/bin/steam" # Replace this to the right path to steam if it is not in /usr/bin/steam
 APPDESKTOP="/usr/share/applications/steam.desktop" # Might be in a different location in some distros.
 STEAMPRELOAD="$HOME/.local/lib/steam"
 
