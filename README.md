@@ -21,6 +21,10 @@ If you don't have `$HOME/.local/bin` in your PATH and/or it is not FIRST in PATH
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
+# READ THIS
+
+If you get `LD_PRELOAD cannot be preloaded (cannot open shared object file)` errors when launching the script from the terminal, that is normal and everything should still work like it should. See [here](https://github.com/Samueru-sama/fixsteam/issues/1)
+
 ----------------------------------------------------
 
 Credit and big thanks goes to https://github.com/RunningDroid for the screensaver fix: 
