@@ -7,51 +7,68 @@
 # # And must be named steam (in lowercase)  # #
 # # # # # # # # # # # # # # # # # # # # # # # #
 
+BINDIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
 DATADIR="${XDG_DATA_HOME:-$HOME/.local/share}"
 STATEDIR="${XDG_STATE_HOME:-$HOME/.local/state}"
 CONFIGDIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
-
-APPHOME="$DATADIR/Steam/HOME"
+APPHOME="$STATEDIR/Steam/HOME"
 APPEXEC="/usr/bin/steam" # Replace this to the right path to steam if it is not in /usr/bin/steam
-APPDESKTOP="/usr/share/applications/steam.desktop" # Might be in a different location in some distros.
-STEAMPRELOAD="$HOME/.local/lib/steam"
+APPDESKTOP="/usr/share/applications/steam.desktop" # Might be in a different location in some distros
+STEAMPRELOAD="$STATEDIR/Steam/lib"
 
 # SAFETY CHECKS
-if ! echo "$PATH" | grep .local/bin >/dev/null 2>&1; then echo 'You have to export PATH="$HOME/.local/bin:$PATH" for this script to work'; exit 1; fi
-if ! command -v "$APPEXEC" >/dev/null 2>&1; then echo 'Steam is not installed or $APPEXEC has the wrong path to steam'; exit 1; fi
-if ! command -v gcc >/dev/null 2>&1; then echo "You need to install gcc for this to work"; exit 1; fi
-[ ! -e /usr/include/gnu/stubs-32.h ] && echo "Could not find /usr/include/gnu/stubs-32.h which is needed for this script to work" && exit 1
-[ ! -e "$HOME/.local/bin/steam" ] && echo "RTFM!" && exit 1
+if ! echo "$PATH" | grep "$BINDIR" >/dev/null 2>&1; then
+	echo 'You have to export PATH="$HOME/.local/bin:$PATH" for this script to work' 
+	exit 1
+elif ! command -v "$APPEXEC" >/dev/null 2>&1; then
+	echo 'Steam is not installed or $APPEXEC has the wrong path to steam'
+	exit 1
+elif ! command -v gcc >/dev/null 2>&1; then
+	echo "You need to install gcc for this to work" 
+	exit 1
+elif [ ! -e /usr/include/gnu/stubs-32.h ]; then
+	echo "Could not find /usr/include/gnu/stubs-32.h which is needed for this script to work"
+	exit 1
+fi
 
 if [ -z "$APPHOME" ] || [ -z "$APPEXEC" ] || [ -z "$APPDESKTOP" ] || [ -z "$STEAMPRELOAD" ] \
 || [ -z "$DATADIR" ] || [ -z "$STATEDIR" ] || [ -z "$CONFIGDIR" ] || [ -z "$CACHEDIR" ]; then
-	echo "You broke the script badly, like what were you thinking?"; exit 1
+	echo "You broke the script badly, like what were you thinking?"
+	exit 1
 fi
 
 # PATCH STEAM DESKTOP FILE
-if ! ls "$DATADIR"/applications/*steam.desktop >/dev/null 2>&1; then
-	cp "$APPDESKTOP" "$DATADIR"/applications/steam.desktop || { echo "Couldn't copy $APPDESKTOP" & exit 1; }
+if ! ls "$DATADIR"/applications/steam*.desktop >/dev/null 2>&1; then
+	cp "$APPDESKTOP" "$DATADIR"/applications/steam.desktop \
+		|| { echo "Couldn't copy $APPDESKTOP"; exit 1; }
 fi
 
-if ! grep "Exec=steam-runtime %U" "$DATADIR"/applications/*steam.desktop >/dev/null 2>&1; then
-	sed -i "s#Exec=[^ ]*#Exec=steam-runtime#g" "$DATADIR"/applications/*steam.desktop && echo "patched steam.desktop"
+if ! grep "Exec=steam-runtime %U" "$DATADIR"/applications/steam*.desktop >/dev/null 2>&1; then
+	sed -i "s#Exec=[^ ]*#Exec=steam-runtime#g" "$DATADIR"/applications/steam*.desktop \
+		&& echo "patched steam.desktop"
 fi
 
-# MAKE APPHOME AND LINKS
+# MAKE FAKEHOME AND LINKS
 mkdir -p "$APPHOME/.local" "$DATADIR/pki" "$DATADIR/icons" 2>/dev/null
-[ ! -e "$HOME/.local/bin/steam-runtime" ] && ln -s "$HOME/.local/bin/steam" "$HOME/.local/bin/steam-runtime"
 [ ! -e "$APPHOME/.local/share" ] && ln -s "$DATADIR" "$APPHOME/.local/share"
 [ ! -e "$APPHOME/.local/state" ] && ln -s "$STATEDIR" "$APPHOME/.local/state"
 [ ! -e "$APPHOME/.config" ] && ln -s "$CONFIGDIR" "$APPHOME/.config"
 [ ! -e "$APPHOME/.cache" ] && ln -s "$CACHEDIR" "$APPHOME/.cache"
-[ ! -e "$APPHOME/.icons" ] && ln -s "$DATADIR/icons" "$APPHOME/.icons" # Some apps have hardcoded ~/.icons path
-[ ! -e "$APPHOME/.pki" ] && ln -s "$DATADIR/pki" "$APPHOME/.pki" # Chromium/electron hardcode ~/.pki
+# Some apps have hardcoded ~/.icons path
+[ ! -e "$APPHOME/.icons" ] && ln -s "$DATADIR/icons" "$APPHOME/.icons"
+# Chromium/electron hardcode ~/.pki
+[ ! -e "$APPHOME/.pki" ] && ln -s "$DATADIR/pki" "$APPHOME/.pki"
+[ ! -e "$HOME/.local/bin/steam-runtime" ] && ln -s steam "$HOME/.local/bin/steam-runtime"
 
-find "$APPHOME" -xtype l -delete # Clears broken links
-ln -s "$HOME"/* "$APPHOME" >/dev/null 2>&1 # Symlinks other files in $HOME to $APPHOME (Remove the next # below to also symlink hidden files)
-#ln -s "$HOME"/.* "$APPHOME" >/dev/null 2>&1 
-[ ! -e "$APPHOME/Desktop" ] && ln -s "$HOME" "$APPHOME/Desktop" # Makes steam install .desktop of games in $HOME if there is not a ~/Desktop dir
+# Link $HOME files to fakehome
+find "$APPHOME" -xtype l -delete
+ln -s "$HOME"/* "$APPHOME" >/dev/null 2>&1
+# Just in case the app needs a non existent ~/Desktop
+[ ! -e "$APPHOME/Desktop" ] && ln -s "$HOME" "$APPHOME/Desktop"
+# Uncomment this if you also need to symlink other hidden files to APPHOME.
+#ln -s "$HOME"/.* "$APPHOME" >/dev/null 2>&1
+
 
 # MAKE LIBRARY THAT FIXES SCREENSAVER ISSUE
 if [ -z "$(ls "$STEAMPRELOAD" 2>/dev/null)" ]; then
@@ -162,6 +179,7 @@ export LD_PRELOAD="$STEAMPRELOAD/sdl_block_screensaver_inhibit_\$LIB.so"
 export SDL_VIDEO_ALLOW_SCREENSAVER=1
 
 if [ -z "$@" ]; then
+	notify-send "Launching Ruthless non-XDG Compliant Software: Steam" "(Also fucks your screensaver lol)"
 	HOME="$APPHOME" "$APPEXEC" -nochatui -nofriendsui -silent || notify-send "App not found"
 else
 	HOME="$APPHOME" "$APPEXEC" "$@" || notify-send "App not found"
