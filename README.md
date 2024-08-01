@@ -1,6 +1,6 @@
 # Notice
 
-I've moved to using this Steam AppImage which contains several of the fixes of this script + it also contains the EAC-Gblic patch.
+I've moved to using this Steam AppImage which contains several of the fixes of this script + it also contains the EAC-Glic patch.
 
 https://github.com/Samueru-sama/Steam-appimage
 
