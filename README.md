@@ -1,3 +1,13 @@
+# Notice
+
+I've moved to using this Steam AppImage which contains several of the fixes of this script + it also contains the EAC-Gblic patch.
+
+https://github.com/Samueru-sama/Steam-appimage
+
+By making a directory next to the AppImage with then name of the AppImage + `.home` you also get rid of the useless dotfiles that Steam puts in $HOME.
+
+----------------------------------------------------------------------
+
 # fixsteam
 This script fixes multiple issues that the linux version of Steam has.
 
